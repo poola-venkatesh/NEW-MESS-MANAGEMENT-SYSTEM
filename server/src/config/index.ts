@@ -20,11 +20,19 @@ if (isProduction) {
   }
 }
 
+let databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
+if (
+  (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) &&
+  !databaseUrl.includes('schema=')
+) {
+  databaseUrl += databaseUrl.includes('?') ? '&schema=smart_mess' : '?schema=smart_mess';
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction,
-  databaseUrl: process.env.DATABASE_URL || 'file:./dev.db',
+  databaseUrl,
   sessionSecret,
   biometricEncryptionKey,
   hostelName: process.env.HOSTEL_NAME || 'Premier College Hostel Mess',
