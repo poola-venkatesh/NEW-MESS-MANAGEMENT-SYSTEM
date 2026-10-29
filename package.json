@@ -1,0 +1,26 @@
+{
+  "name": "smart-mess-management-system",
+  "version": "1.0.0",
+  "description": "Production-oriented Smart Mess Management System for College Hostels",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "bootstrap-admin": "npm run --prefix server bootstrap-admin",
+    "build": "npm run --prefix server build && npm run --prefix client build",
+    "start": "npm run --prefix server start",
+    "dev:server": "npm run --prefix server dev",
+    "dev:client": "npm run --prefix client dev",
+    "test": "npm run --prefix server test"
+  },
+  "keywords": [
+    "mess-management",
+    "biometrics",
+    "face-attendance",
+    "consumption-billing"
+  ],
+  "author": "",
+  "license": "ISC"
+}

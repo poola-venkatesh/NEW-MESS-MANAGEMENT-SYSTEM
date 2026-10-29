@@ -1,0 +1,211 @@
+// Prisma schema for Smart Mess Management System (PostgreSQL for Production)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String          @id @default(uuid())
+  username     String          @unique
+  passwordHash String
+  role         String          @default("STUDENT") // ADMIN, STUDENT
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  studentProfile       StudentProfile?
+  enrolledBiometrics   FaceBiometric[] @relation("EnrolledBy")
+  verifiedAttendances  Attendance[]    @relation("VerifiedBy")
+  receivedPayments     Payment[]       @relation("ReceivedBy")
+  authorizedAdjustments Adjustment[]   @relation("AuthorizedBy")
+  auditLogs            AuditLog[]      @relation("ActorUser")
+}
+
+model StudentProfile {
+  id                String         @id @default(uuid())
+  userId            String         @unique
+  studentId         String         @unique
+  fullName          String
+  email             String?
+  phone             String?
+  hostelBlock       String?
+  roomNo            String?
+  remarks           String?
+  faceEnrolled      Boolean        @default(false)
+  faceEnrolledAt    DateTime?
+  faceConsentGiven  Boolean        @default(false)
+  softDeleted       Boolean        @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  biometric    FaceBiometric?
+  attendances  Attendance[]
+  charges      Charge[]
+  payments     Payment[]
+  adjustments  Adjustment[]
+
+  @@index([studentId])
+  @@index([softDeleted])
+}
+
+model FaceBiometric {
+  id                String          @id @default(uuid())
+  studentId         String          @unique
+  encryptedTemplate String          // AES-256-GCM encrypted 128-D vector
+  iv                String          // Hex initialization vector
+  authTag           String          // Hex authentication tag
+  algorithm         String          @default("aes-256-gcm")
+  modelVersion      String          @default("face-api-facenet-v1")
+  qualityScore      Float           @default(1.0)
+  consentTimestamp  DateTime        @default(now())
+  enrolledByUserId  String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  student           StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  enrolledByUser    User?           @relation("EnrolledBy", fields: [enrolledByUserId], references: [id], onDelete: SetNull)
+}
+
+model MealDefinition {
+  id           String        @id @default(uuid())
+  name         String        @unique // BREAKFAST, LUNCH, SNACKS, DINNER
+  startTime    String        // HH:mm format, e.g. "07:30"
+  endTime      String        // HH:mm format, e.g. "09:30"
+  defaultPrice Decimal       @db.Decimal(10, 2)
+  description  String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  sessions     MealSession[]
+}
+
+model MealSession {
+  id               String          @id @default(uuid())
+  mealDefinitionId String
+  date             String          // YYYY-MM-DD
+  name             String          // BREAKFAST, LUNCH, SNACKS, DINNER
+  startTime        String          // HH:mm
+  endTime          String          // HH:mm
+  price            Decimal         @db.Decimal(10, 2)
+  menuDescription  String?
+  isSpecialMeal    Boolean         @default(false)
+  status           String          @default("ACTIVE")
+  createdAt        DateTime        @default(now())
+
+  mealDefinition   MealDefinition  @relation(fields: [mealDefinitionId], references: [id], onDelete: Restrict)
+  attendances      Attendance[]
+  charges          Charge[]
+
+  @@unique([mealDefinitionId, date])
+  @@index([date])
+}
+
+model Attendance {
+  id                 String          @id @default(uuid())
+  studentId          String
+  mealSessionId      String
+  date               String          // YYYY-MM-DD
+  verifiedAt         DateTime        @default(now())
+  verificationMethod String          // FACE_BIOMETRIC, AUDITED_MANUAL
+  confidenceScore    Float?
+  verifiedByUserId   String?
+  status             String          @default("VALID")
+  voidReason         String?
+
+  student            StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  mealSession        MealSession     @relation(fields: [mealSessionId], references: [id], onDelete: Restrict)
+  charge             Charge?
+  verifiedByUser     User?           @relation("VerifiedBy", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, mealSessionId])
+  @@index([studentId, date])
+  @@index([date])
+}
+
+model Charge {
+  id            String          @id @default(uuid())
+  studentId     String
+  mealSessionId String
+  attendanceId  String          @unique
+  amount        Decimal         @db.Decimal(10, 2)
+  mealName      String
+  date          String          // YYYY-MM-DD
+  status        String          @default("APPLIED")
+  createdAt     DateTime        @default(now())
+
+  student       StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  mealSession   MealSession     @relation(fields: [mealSessionId], references: [id], onDelete: Restrict)
+  attendance    Attendance      @relation(fields: [attendanceId], references: [id], onDelete: Restrict)
+
+  @@index([studentId, date])
+  @@index([date])
+}
+
+model Payment {
+  id               String          @id @default(uuid())
+  studentId        String
+  amount           Decimal         @db.Decimal(10, 2)
+  paymentMethod    String
+  referenceNo      String?
+  receivedByUserId String?
+  receiptNotes     String?
+  createdAt        DateTime        @default(now())
+
+  student          StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  receivedByUser   User?           @relation("ReceivedBy", fields: [receivedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+}
+
+model Adjustment {
+  id                 String          @id @default(uuid())
+  studentId          String
+  amount             Decimal         @db.Decimal(10, 2)
+  type               String
+  reason             String
+  authorizedByUserId String
+  createdAt          DateTime        @default(now())
+
+  student            StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  authorizedByUser   User            @relation("AuthorizedBy", fields: [authorizedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([studentId])
+}
+
+model AcademicCalendar {
+  id        String   @id @default(uuid())
+  name      String
+  type      String
+  startDate String
+  endDate   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  actorRole   String?
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actorUser   User?    @relation("ActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
