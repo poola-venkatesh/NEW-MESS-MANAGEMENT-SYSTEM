@@ -2,7 +2,7 @@
  * Frontend API client with credentials and JSON helpers
  */
 
-const API_BASE = '/api';
+const API_BASE = ((import.meta as any).env?.VITE_API_URL || '').replace(/\/$/, '') + '/api';
 
 export class ApiError extends Error {
   status: number;
@@ -16,12 +16,37 @@ export class ApiError extends Error {
   }
 }
 
+export function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem('mess_auth_token');
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredToken(token: string | null) {
+  try {
+    if (token) {
+      localStorage.setItem('mess_auth_token', token);
+    } else {
+      localStorage.removeItem('mess_auth_token');
+    }
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   const headers = new Headers(options.headers || {});
 
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  const token = getStoredToken();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const response = await fetch(url, {

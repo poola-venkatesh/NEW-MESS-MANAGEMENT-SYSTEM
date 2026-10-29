@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "bootstrap-admin": "ts-node src/scripts/bootstrap-admin.ts",
-    "test": "vitest run"
+    "test": "DATABASE_URL=\"file:./test.db\" prisma db push --accept-data-loss && DATABASE_URL=\"file:./test.db\" vitest run"
   },
   "dependencies": {
     "@prisma/client": "4.16.2",

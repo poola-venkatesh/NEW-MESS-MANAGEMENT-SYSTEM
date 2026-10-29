@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User, AlertCircle, ArrowRight, Info } from 'lucide-react';
-import { api, ApiError } from '../../services/api';
+import { api, ApiError, setStoredToken } from '../../services/api';
 
 export const StudentLogin: React.FC<{ onLoginSuccess: (user: any) => void }> = ({
   onLoginSuccess,
@@ -21,6 +21,9 @@ export const StudentLogin: React.FC<{ onLoginSuccess: (user: any) => void }> = (
       const res: any = await api.post('/auth/login', { username, password });
       if (res.user.role !== 'STUDENT') {
         throw new Error('This portal is for Students. For admin access, use the Admin Portal.');
+      }
+      if (res.token) {
+        setStoredToken(res.token);
       }
       onLoginSuccess(res.user);
       navigate('/student');

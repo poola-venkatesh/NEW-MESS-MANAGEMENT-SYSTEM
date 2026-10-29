@@ -32,6 +32,7 @@ model StudentProfile {
   fullName          String
   email             String?
   phone             String?
+  course            String?
   hostelBlock       String?
   roomNo            String?
   remarks           String?

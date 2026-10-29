@@ -1,7 +1,7 @@
 import React from 'react';
 import { LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, setStoredToken } from '../services/api';
 
 interface NavbarProps {
   user?: {
@@ -21,14 +21,16 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
   const handleLogout = async () => {
     try {
       await api.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setStoredToken(null);
       if (onLogout) onLogout();
       if (user?.role === 'ADMIN') {
         navigate('/admin/login');
       } else {
         navigate('/student/login');
       }
-    } catch (err) {
-      console.error('Logout error:', err);
     }
   };
 

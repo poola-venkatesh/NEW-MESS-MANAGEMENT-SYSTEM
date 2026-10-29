@@ -201,7 +201,7 @@ export const StudentManagement: React.FC = () => {
                         {student.fullName}
                       </span>
                       <span className="text-[11px] text-slate-500 font-mono">
-                        {student.studentId} • @{student.username}
+                        {student.studentId} • @{student.username} {student.course ? `• ${student.course}` : ''}
                       </span>
                     </td>
 

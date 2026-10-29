@@ -13,6 +13,7 @@ export const RegisterStudent: React.FC = () => {
     password: '',
     email: '',
     phone: '',
+    course: '',
     hostelBlock: 'Block A',
     roomNo: '',
     remarks: '',
@@ -132,6 +133,7 @@ export const RegisterStudent: React.FC = () => {
                   password: '',
                   email: '',
                   phone: '',
+                  course: '',
                   hostelBlock: 'Block A',
                   roomNo: '',
                   remarks: '',
@@ -231,6 +233,20 @@ export const RegisterStudent: React.FC = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+91 98765 43210"
+                className="mt-1 w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700">
+                Course & Branch / Study Info
+              </label>
+              <input
+                type="text"
+                name="course"
+                value={formData.course}
+                onChange={handleChange}
+                placeholder="e.g. B.Tech CSE (3rd Year) or PUC-1"
                 className="mt-1 w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>

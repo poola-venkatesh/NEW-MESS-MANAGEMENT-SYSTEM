@@ -90,6 +90,13 @@ export const StudentProfile: React.FC<{ user: any; onProfileUpdate?: (user: any)
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-400 block text-[11px] font-semibold">Course & Study Info</span>
+            <span className="text-slate-800 font-medium">
+              {profile?.course || 'General Degree Program'}
+            </span>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <span className="text-slate-400 block text-[11px] font-semibold">Hostel Allocation</span>
             <span className="text-slate-800 font-medium">
               {profile?.hostelBlock || 'Block A'} - Room {profile?.roomNo || 'N/A'}

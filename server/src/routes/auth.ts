@@ -66,8 +66,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    // Set HTTP-only secure cookie
-    setSessionCookie(res, user.id, user.role);
+    // Set HTTP-only secure cookie and retrieve signed token
+    const token = setSessionCookie(res, user.id, user.role);
 
     await logAuditEvent({
       actorUserId: user.id,
@@ -80,6 +80,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
 
     return res.json({
       message: 'Login successful',
+      token,
       user: {
         id: user.id,
         username: user.username,
@@ -90,6 +91,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
               studentId: user.studentProfile.studentId,
               fullName: user.studentProfile.fullName,
               email: user.studentProfile.email,
+              course: user.studentProfile.course,
               hostelBlock: user.studentProfile.hostelBlock,
               roomNo: user.studentProfile.roomNo,
               faceEnrolled: user.studentProfile.faceEnrolled,
@@ -152,6 +154,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
               fullName: user.studentProfile.fullName,
               email: user.studentProfile.email,
               phone: user.studentProfile.phone,
+              course: user.studentProfile.course,
               hostelBlock: user.studentProfile.hostelBlock,
               roomNo: user.studentProfile.roomNo,
               remarks: user.studentProfile.remarks,

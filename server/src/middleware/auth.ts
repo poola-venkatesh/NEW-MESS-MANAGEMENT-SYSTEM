@@ -75,7 +75,7 @@ export function verifySession(token: string): SessionData | null {
 /**
  * Attach session cookie to HTTP response
  */
-export function setSessionCookie(res: Response, userId: string, role: string) {
+export function setSessionCookie(res: Response, userId: string, role: string): string {
   const token = signSession({
     userId,
     role,
@@ -85,10 +85,12 @@ export function setSessionCookie(res: Response, userId: string, role: string) {
   res.cookie(config.cookieName, token, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: '/',
   });
+
+  return token;
 }
 
 /**
@@ -98,7 +100,7 @@ export function clearSessionCookie(res: Response) {
   res.clearCookie(config.cookieName, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     path: '/',
   });
 }
@@ -107,7 +109,16 @@ export function clearSessionCookie(res: Response) {
  * Middleware: Verify user is authenticated
  */
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies?.[config.cookieName];
+  let token = req.cookies?.[config.cookieName];
+
+  // Also support Authorization: Bearer <token> header for cross-origin SPA resilience
+  if (!token && req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim();
+    }
+  }
+
   if (!token) {
     return res.status(401).json({ error: 'Authentication required. Please log in.' });
   }

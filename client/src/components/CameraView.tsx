@@ -33,6 +33,16 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const startCamera = useCallback(async (deviceId?: string) => {
     setCameraError(null);
     try {
+      if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        setCameraError('Camera access requires a secure HTTPS connection. Please access this portal via the secure HTTPS URL.');
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError('Camera API (getUserMedia) is not supported or is blocked. Ensure you are accessing via HTTPS.');
+        return;
+      }
+
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }

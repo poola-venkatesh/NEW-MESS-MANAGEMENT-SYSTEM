@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Shield, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
-import { api, ApiError } from '../../services/api';
+import { api, ApiError, setStoredToken } from '../../services/api';
 
 export const AdminLogin: React.FC<{ onLoginSuccess: (user: any) => void }> = ({
   onLoginSuccess,
@@ -21,6 +21,9 @@ export const AdminLogin: React.FC<{ onLoginSuccess: (user: any) => void }> = ({
       const res: any = await api.post('/auth/login', { username, password });
       if (res.user.role !== 'ADMIN') {
         throw new Error('This portal is restricted to authorized Mess Administrators.');
+      }
+      if (res.token) {
+        setStoredToken(res.token);
       }
       onLoginSuccess(res.user);
       navigate('/admin');
