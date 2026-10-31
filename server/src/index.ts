@@ -4,9 +4,32 @@ import { ensureMealDefinitions } from './services/mealSessionService';
 
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
+import { execSync } from 'child_process';
+import path from 'path';
+
+async function ensureDatabaseTablesExist() {
+  try {
+    await prisma.user.count();
+  } catch (err: any) {
+    if (err?.message?.includes('does not exist') || err?.code === 'P2021') {
+      console.warn('⚠️ Database tables missing. Running automatic schema push...');
+      execSync('npx prisma db push --skip-generate --accept-data-loss', {
+        cwd: path.resolve(__dirname, '..'),
+        stdio: 'inherit',
+        env: process.env,
+      });
+      console.log('✅ Database tables initialized successfully.');
+    } else {
+      throw err;
+    }
+  }
+}
 
 async function startServer() {
   try {
+    // Self-healing database readiness check
+    await ensureDatabaseTablesExist();
+
     // Ensure initial admin user exists
     const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
     if (adminCount === 0) {

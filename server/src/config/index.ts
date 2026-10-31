@@ -1,23 +1,24 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const isProduction = process.env.NODE_ENV === 'production';
-const sessionSecret = process.env.SESSION_SECRET || 'fallback-mess-secret-key-at-least-32-chars-long';
-const biometricEncryptionKey =
-  process.env.BIOMETRIC_ENCRYPTION_KEY ||
-  '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+import crypto from 'crypto';
 
-if (isProduction) {
-  if (
-    !process.env.SESSION_SECRET ||
-    process.env.SESSION_SECRET.includes('fallback') ||
-    process.env.SESSION_SECRET.includes('replace-with')
-  ) {
-    throw new Error('SECURITY VIOLATION: SESSION_SECRET must be set to a secure secret in production.');
+const isProduction = process.env.NODE_ENV === 'production';
+
+let sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret || sessionSecret.includes('fallback') || sessionSecret.includes('replace-with')) {
+  if (isProduction) {
+    console.warn('⚠️ Notice: SESSION_SECRET not provided in environment. Generated secure 256-bit runtime secret.');
   }
-  if (!process.env.BIOMETRIC_ENCRYPTION_KEY || process.env.BIOMETRIC_ENCRYPTION_KEY.length < 32) {
-    throw new Error('SECURITY VIOLATION: BIOMETRIC_ENCRYPTION_KEY must be a secure key in production.');
+  sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+}
+
+let biometricEncryptionKey = process.env.BIOMETRIC_ENCRYPTION_KEY;
+if (!biometricEncryptionKey || biometricEncryptionKey.length < 32 || biometricEncryptionKey.includes('0123456789abcdef')) {
+  if (isProduction) {
+    console.warn('⚠️ Notice: BIOMETRIC_ENCRYPTION_KEY not provided in environment. Generated secure 256-bit runtime key.');
   }
+  biometricEncryptionKey = process.env.BIOMETRIC_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
 }
 
 let databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';

@@ -21,13 +21,17 @@ try {
     console.log('🐘 PostgreSQL detected. Synchronizing PostgreSQL schema into smart_mess...');
     fs.copyFileSync(pgSchemaFile, schemaFile);
     execSync('npx prisma generate', { stdio: 'inherit', cwd: path.resolve(__dirname, '../..'), env: process.env });
-    execSync('npx prisma db push --skip-generate', { stdio: 'inherit', cwd: path.resolve(__dirname, '../..'), env: process.env });
+    execSync('npx prisma db push --skip-generate --accept-data-loss', { stdio: 'inherit', cwd: path.resolve(__dirname, '../..'), env: process.env });
   } else {
-    console.log('📁 SQLite detected. Ensuring Prisma Client is generated...');
+    console.log('📁 SQLite detected. Ensuring Prisma Client is generated and tables initialized...');
     execSync('npx prisma generate', { stdio: 'inherit', cwd: path.resolve(__dirname, '../..'), env: process.env });
+    execSync('npx prisma db push --skip-generate --accept-data-loss', { stdio: 'inherit', cwd: path.resolve(__dirname, '../..'), env: process.env });
   }
   console.log('✅ Database preparation completed successfully.');
 } catch (err) {
-  console.error('❌ Database preparation error:', err.message);
+  console.error('❌ Database preparation error:');
+  if (err.stdout) console.error(err.stdout.toString());
+  if (err.stderr) console.error(err.stderr.toString());
+  console.error(err.message);
   process.exit(1);
 }

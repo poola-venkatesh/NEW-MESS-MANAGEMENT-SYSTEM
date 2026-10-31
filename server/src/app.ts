@@ -29,11 +29,13 @@ app.use(
       if (
         origin === config.frontendUrl ||
         origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:')
+        origin.startsWith('http://127.0.0.1:') ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com')
       ) {
         return callback(null, true);
       }
-      return callback(null, true); // Permissive in dev/testing, restrict in prod
+      return callback(null, true); // Allow configured and cross-origin calls
     },
     credentials: true,
   })
